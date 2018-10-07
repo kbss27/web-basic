@@ -1,18 +1,16 @@
 package next.dao;
 
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 
-import core.jdbc.ConnectionManager;
 import next.model.User;
 
 public class UserDao {
     public void insert(User user) throws SQLException {
-        JdbcTemplate jdbcTemplate = new JdbcTemplate() {
+        JdbcTemplate jdbcTemplate = new JdbcTemplate();
+        PreparedStatementSetter preparedStatementSetter = new PreparedStatementSetter() {
             @Override
             public void setValues(PreparedStatement pstmt) throws SQLException {
                 pstmt.setString(1, user.getUserId());
@@ -21,11 +19,13 @@ public class UserDao {
                 pstmt.setString(4, user.getEmail());
             }
         };
-        jdbcTemplate.update("INSERT INTO USERS VALUES (?, ?, ?, ?)");
+
+        jdbcTemplate.update("INSERT INTO USERS VALUES (?, ?, ?, ?)", preparedStatementSetter);
     }
 
     public void update(User user) throws SQLException {
-        JdbcTemplate jdbcTemplate = new JdbcTemplate() {
+        JdbcTemplate jdbcTemplate = new JdbcTemplate();
+        PreparedStatementSetter preparedStatementSetter = new PreparedStatementSetter() {
             @Override
             public void setValues(PreparedStatement pstmt) throws SQLException {
                 pstmt.setString(1, user.getUserId());
@@ -36,41 +36,44 @@ public class UserDao {
             }
         };
 
-        jdbcTemplate.update("UPDATE USERS SET userId=?, password=?, name=?, email=? WHERE userId=?");
+        jdbcTemplate.update("UPDATE USERS SET userId=?, password=?, name=?, email=? WHERE userId=?", preparedStatementSetter);
     }
 
 
     public List<User> findAll() throws SQLException {
-        SelectJdbcTemplate selectJdbcTemplate = new SelectJdbcTemplate() {
-            @Override
-            public User mapRow(ResultSet rs) throws SQLException {
-                return new User(rs.getString("userId"), rs.getString("password"), rs.getString("name"),
-                        rs.getString("email"));
-            }
-
+        JdbcTemplate jdbcTemplate = new JdbcTemplate();
+        PreparedStatementSetter preparedStatementSetter = new PreparedStatementSetter() {
             @Override
             public void setValues(PreparedStatement pstmt) throws SQLException {
 
             }
         };
-        return selectJdbcTemplate.query("SELECT userId, password, name, email FROM USERS");
+        RowMapper rowMapper = new RowMapper() {
+            @Override
+            public Object mapRow(ResultSet rs) throws SQLException {
+                return new User(rs.getString("userId"), rs.getString("password"), rs.getString("name"),
+                        rs.getString("email"));
+            }
+        };
+        return jdbcTemplate.query("SELECT userId, password, name, email FROM USERS", preparedStatementSetter, rowMapper);
     }
 
 
     public User findByUserId(String userId) throws SQLException {
-        SelectJdbcTemplate selectJdbcTemplate = new SelectJdbcTemplate() {
-            @Override
-            public User mapRow(ResultSet rs) throws SQLException {
-                return new User(rs.getString("userId"), rs.getString("password"), rs.getString("name"),
-                        rs.getString("email"));
-            }
-
+        JdbcTemplate jdbcTemplate = new JdbcTemplate();
+        PreparedStatementSetter preparedStatementSetter = new PreparedStatementSetter() {
             @Override
             public void setValues(PreparedStatement pstmt) throws SQLException {
                 pstmt.setString(1, userId);
             }
         };
-        return (User)selectJdbcTemplate.queryForObject("SELECT userId, password, name, email FROM USERS WHERE userid=?");
+        RowMapper rowMapper = new RowMapper() {
+            @Override
+            public Object mapRow(ResultSet rs) throws SQLException {
+                return new User(rs.getString("userId"), rs.getString("password"), rs.getString("name"),
+                        rs.getString("email"));            }
+        };
+        return (User)jdbcTemplate.queryForObject("SELECT userId, password, name, email FROM USERS WHERE userid=?", preparedStatementSetter, rowMapper);
     }
 
 }
