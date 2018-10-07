@@ -12,14 +12,10 @@ import java.util.List;
 
 public class JdbcTemplate {
     public List query(String sql, PreparedStatementSetter preparedStatementSetter, RowMapper rowMapper)
-            throws SQLException {
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
-        try {
-            con = ConnectionManager.getConnection();
-            pstmt = con.prepareStatement(sql);
-
+            throws DataAccessException {
+        try (Connection con = ConnectionManager.getConnection();
+             PreparedStatement pstmt = con.prepareStatement(sql)) {
+            ResultSet rs = null;
             preparedStatementSetter.setValues(pstmt);
             rs = pstmt.executeQuery();
 
@@ -29,16 +25,8 @@ public class JdbcTemplate {
             }
 
             return users;
-        } finally {
-            if (rs != null) {
-                rs.close();
-            }
-            if (pstmt != null) {
-                pstmt.close();
-            }
-            if (con != null) {
-                con.close();
-            }
+        } catch (SQLException e) {
+            throw new DataAccessException(e);
         }
     }
 
@@ -48,22 +36,12 @@ public class JdbcTemplate {
     }
 
     public void update(String sql, PreparedStatementSetter preparedStatementSetter) throws SQLException {
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        try {
-            con = ConnectionManager.getConnection();
-            pstmt = con.prepareStatement(sql);
+        try (Connection con = ConnectionManager.getConnection();
+             PreparedStatement pstmt = con.prepareStatement(sql)) {
             preparedStatementSetter.setValues(pstmt);
-
             pstmt.executeUpdate();
-        } finally {
-            if (pstmt != null) {
-                pstmt.close();
-            }
-
-            if (con != null) {
-                con.close();
-            }
+        } catch (SQLException e) {
+            throw new DataAccessException(e);
         }
     }
 }
