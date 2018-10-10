@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class JdbcTemplate {
-    public List query(String sql, PreparedStatementSetter preparedStatementSetter, RowMapper rowMapper)
+    public <T> List<T> query(String sql, PreparedStatementSetter preparedStatementSetter, RowMapper<T> rowMapper)
             throws DataAccessException {
         try (Connection con = ConnectionManager.getConnection();
              PreparedStatement pstmt = con.prepareStatement(sql)) {
@@ -19,9 +19,9 @@ public class JdbcTemplate {
             preparedStatementSetter.setValues(pstmt);
             rs = pstmt.executeQuery();
 
-            List<User> users = new ArrayList<>();
+            List<T> users = new ArrayList<>();
             while (rs.next()) {
-                users.add((User)rowMapper.mapRow(rs));
+                users.add(rowMapper.mapRow(rs));
             }
 
             return users;
@@ -30,7 +30,7 @@ public class JdbcTemplate {
         }
     }
 
-    public Object queryForObject(String sql, PreparedStatementSetter preparedStatementSetter, RowMapper rowMapper)
+    public <T> T queryForObject(String sql, PreparedStatementSetter preparedStatementSetter, RowMapper<T> rowMapper)
             throws SQLException {
         return query(sql, preparedStatementSetter, rowMapper).get(0);
     }
